@@ -59,9 +59,10 @@ function startpreview(box) {
             }
         }, 10);
     };
+    return audio
 }
 function startdownload(box) {
-    startpreview(box);
+    let currentAudio = startpreview(box);
     if (box.downloading) {
         return;
     }
@@ -131,6 +132,7 @@ function startdownload(box) {
             box.oszblob = blob;
             bar.className = "finished";
             box.classList.remove("downloading");
+            currentAudio.softstop();
         })
         .catch(error => {
             console.error("Download failed:", error.message);
