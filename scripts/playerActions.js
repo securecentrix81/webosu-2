@@ -289,8 +289,15 @@ define([], function () {
     };
     var touchstartCallback = function (e) {
       touchmoveCallback(e);
-      if (playback.game.M1down) return;
-      playback.game.M1down = true;
+      if (playback.game.M1down) {
+        if (playback.game.M2down) {
+          return
+        } else {
+          playback.game.M2down = true;
+        }
+      } else {
+        playback.game.M1down = true;
+      }
       if (!playback.game.paused && !playback.ended) {
         e.preventDefault();
       }
@@ -303,7 +310,11 @@ define([], function () {
     };
     var touchendCallback = function (e) {
       touchmoveCallback(e);
-      playback.game.M1down = false;
+      if (playback.game.M1down) {
+        playback.game.M1down = false;
+      } else if (playback.game.M2down) {
+        playback.game.M2down = false;
+      }
       if (!playback.game.paused && !playback.ended) {
         e.preventDefault();
       }
