@@ -189,6 +189,10 @@ function setOptionPanel() {
       // c1.checked = false;
       c2.checked = false;
       c3.checked = false;
+      saveToLocal();
+      checkdefault(c1, item1);
+      checkdefault(c2, item2);
+      checkdefault(c3, item3);
     };
     c2.onclick = function () {
       gamesettings[item1] = false;
@@ -197,6 +201,10 @@ function setOptionPanel() {
       c1.checked = false;
       // c2.checked = false;
       c3.checked = false;
+      saveToLocal();
+      checkdefault(c1, item1);
+      checkdefault(c2, item2);
+      checkdefault(c3, item3);
     };
     c3.onclick = function () {
       gamesettings[item1] = false;
@@ -205,13 +213,12 @@ function setOptionPanel() {
       c1.checked = false;
       c2.checked = false;
       // c3.checked = false;
+      gamesettings.loadToGame();
+      saveToLocal();
+      checkdefault(c1, item1);
+      checkdefault(c2, item2);
+      checkdefault(c3, item3);
     };
-
-    gamesettings.loadToGame();
-    saveToLocal();
-    checkdefault(c1, item1);
-    checkdefault(c2, item2);
-    checkdefault(c3, item3);
   }
 
 
