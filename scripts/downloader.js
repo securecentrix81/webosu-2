@@ -20,8 +20,8 @@ function startpreview(box) {
     const audio = document.createElement("audio");
     const source = document.createElement("source");
     console.log("pazinga");
-    // source.src = `https://cdn.sayobot.cn:25225/preview/${box.sid}.mp3`;
-    source.src = `https://api.nerinyan.moe/p/${sid}`
+    source.src = `https://cdn.sayobot.cn:25225/preview/${box.sid}.mp3`;
+    // source.src = `https://api.nerinyan.moe/p/${sid}`
     source.type = "audio/mpeg";
     audio.appendChild(source);
 
@@ -68,8 +68,8 @@ function startdownload(box) {
         return;
     }
 
-    //const url = `https://txy1.sayobot.cn/beatmaps/download/mini/${box.sid}`;
-    const url = `https://api.nerinyan.moe/d/${sid}`;
+    const url = `https://txy1.sayobot.cn/beatmaps/download/mini/${box.sid}`;
+    // const url = `https://api.nerinyan.moe/d/${sid}`;
     box.downloading = true;
     box.classList.add("downloading");
 
