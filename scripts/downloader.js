@@ -68,7 +68,7 @@ function startdownload(box) {
         return;
     }
 
-    const url = `https://txy1.sayobot.cn/beatmaps/download/mini/${box.sid}`;
+    const url = `https://osu.direct/d/${box.sid}`//`https://txy1.sayobot.cn/beatmaps/download/mini/${box.sid}`;
     // const url = `https://api.nerinyan.moe/d/${sid}`;
     box.downloading = true;
     box.classList.add("downloading");
