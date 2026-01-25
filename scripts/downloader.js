@@ -67,7 +67,7 @@ function startdownload(box) {
         return;
     }
 
-    const url = const url = getDownloadUrl(box.sid);
+    const url = getDownloadUrl(box.sid);
     box.downloading = true;
     box.classList.add("downloading");
 
