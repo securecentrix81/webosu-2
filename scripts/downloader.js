@@ -20,8 +20,7 @@ function startpreview(box) {
     const audio = document.createElement("audio");
     const source = document.createElement("source");
     console.log("pazinga");
-    source.src = `https://cdn.sayobot.cn:25225/preview/${box.sid}.mp3`;
-    // source.src = `https://api.nerinyan.moe/p/${sid}`
+    source.src = getPreviewUrl(box.sid);
     source.type = "audio/mpeg";
     audio.appendChild(source);
 
