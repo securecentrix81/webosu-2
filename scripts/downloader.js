@@ -67,8 +67,7 @@ function startdownload(box) {
         return;
     }
 
-    const url = `https://txy1.sayobot.cn/beatmaps/download/mini/${box.sid}`;
-    // const url = `https://api.nerinyan.moe/d/${sid}`;
+    const url = const url = getDownloadUrl(box.sid);
     box.downloading = true;
     box.classList.add("downloading");
 
