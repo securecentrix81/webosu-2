@@ -277,9 +277,16 @@ define([], function () {
     };
     var touchmoveCallback = function (e) {
       if (!e.touches || !e.touches[0]) return;
+      
+      // PREVENT BROWSER SCROLLING
+      if (!playback.game.paused && !playback.ended) {
+        e.preventDefault(); 
+      }
+
       var touch = e.touches[0];
       playback.game.mouseX = ((touch.clientX - gfx.xoffset) / gfx.width) * 512;
       playback.game.mouseY = ((touch.clientY - gfx.yoffset) / gfx.height) * 384;
+      
       movehistory.unshift({
         x: playback.game.mouseX,
         y: playback.game.mouseY,
@@ -355,30 +362,34 @@ define([], function () {
         playback.game.M2down;
     };
 
-    // set eventlisteners
-    if (!playback.autoplay) {
+        // --- 1. Movement Listeners (Handle dragging and moving) ---
+    // Player moves the cursor in Normal mode and Relax mode.
+    if (!playback.autoplay && !playback.autopilot) {
       playback.game.window.addEventListener("mousemove", mousemoveCallback);
-      // mouse click handling for gameplay
-      if (!playback.relax) {
-        if (playback.game.allowMouseButton) {
-          playback.game.window.addEventListener("mousedown", mousedownCallback);
-          playback.game.window.addEventListener("mouseup", mouseupCallback);
-          // touch handling for gameplay
-          if ("ontouchstart" in window) {
-            playback.game.window.addEventListener(
-              "touchstart",
-              touchstartCallback
-            );
-            playback.game.window.addEventListener("touchend", touchendCallback);
-          }
-        }
-        // keyboard click handling for gameplay
-        playback.game.window.addEventListener("keydown", keydownCallback);
-        playback.game.window.addEventListener("keyup", keyupCallback);
+      
+      if ("ontouchstart" in window) {
+        // We use { passive: false } to ensure preventDefault() works to stop scrolling
+        playback.game.window.addEventListener("touchmove", touchmoveCallback, { passive: false });
+      }
+    }
 
-        if ("ontouchstart" in window) {
-          playback.game.window.addEventListener("touchmove", touchmoveCallback);
-        }
+    // --- 2. Action Listeners (Handle clicking/tapping) ---
+    // Player clicks in Normal mode and Autopilot mode.
+    if (!playback.autoplay && !playback.relax) {
+      // Mouse Clicking
+      if (playback.game.allowMouseButton) {
+        playback.game.window.addEventListener("mousedown", mousedownCallback);
+        playback.game.window.addEventListener("mouseup", mouseupCallback);
+      }
+
+      // Keyboard Clicking
+      playback.game.window.addEventListener("keydown", keydownCallback);
+      playback.game.window.addEventListener("keyup", keyupCallback);
+
+      // Touch Tapping
+      if ("ontouchstart" in window) {
+        playback.game.window.addEventListener("touchstart", touchstartCallback, { passive: false });
+        playback.game.window.addEventListener("touchend", touchendCallback, { passive: false });
       }
     }
 
