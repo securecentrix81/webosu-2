@@ -1,3 +1,4 @@
+/*
 // scripts/config.js
 const BEATMAP_PROVIDER = {
     // Beatmap .osz download
@@ -36,4 +37,46 @@ function getInfoUrl(sid) {
 
 function getInfoUrlV2(sid) {
     return `${BEATMAP_PROVIDER.API_INFO_V2}${sid}`;
+}
+
+*/
+
+// scripts/config.js
+const BEATMAP_PROVIDER = {
+    // Beatmap .osz download
+    DOWNLOAD: "https://osu.direct/d/",
+    
+    // Audio preview (mp3) - uses osu! official assets
+    PREVIEW: "https://b.ppy.sh/preview/",
+    
+    // Cover image - uses osu! official assets
+    COVER: "https://assets.ppy.sh/beatmaps/",
+    
+    // Beatmap info API (single map details)
+    API_INFO: "https://osu.direct/api/v2/s/",
+    API_INFO_V2: "https://osu.direct/api/v2/b/",
+    
+    // Beatmap list API (browsing/searching)
+    API_LIST: "https://osu.direct/api/v2/search"
+};
+
+// Helper functions for URL construction
+function getDownloadUrl(sid) {
+    return `${BEATMAP_PROVIDER.DOWNLOAD}${sid}`;
+}
+
+function getPreviewUrl(sid) {
+    return `${BEATMAP_PROVIDER.PREVIEW}${sid}.mp3`;
+}
+
+function getCoverUrl(sid) {
+    return `${BEATMAP_PROVIDER.COVER}${sid}/covers/cover.jpg`;
+}
+
+function getInfoUrl(sid) {
+    return `${BEATMAP_PROVIDER.API_INFO}${sid}`;
+}
+
+function getInfoUrlV2(bid) {
+    return `${BEATMAP_PROVIDER.API_INFO_V2}${bid}`;
 }
