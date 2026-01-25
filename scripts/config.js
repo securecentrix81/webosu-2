@@ -44,8 +44,10 @@ function getInfoUrlV2(sid) {
 // scripts/config.js
 
 const BEATMAP_PROVIDER = {
-    // Beatmap .osz download (using ?noVideo=1 to mimic the original 'mini' behavior)
-    DOWNLOAD: "https://osu.direct/d/",
+    // Beatmap .osz download 
+    // WE MUST USE A CORS-FRIENDLY MIRROR HERE. 
+    // osu.direct blocks browser fetches, but NeriNyan allows them.
+    DOWNLOAD: "https://api.nerinyan.moe/d/",
     
     // Audio preview (mp3) - redirected to official osu! assets
     PREVIEW: "https://b.ppy.sh/preview/",
@@ -63,7 +65,7 @@ const BEATMAP_PROVIDER = {
 
 // Helper functions for URL construction
 function getDownloadUrl(sid) {
-    // Adding ?noVideo=1 to approximate the 'mini' download from Sayobot
+    // NeriNyan supports adding &noVideo=1 to save bandwidth
     return `${BEATMAP_PROVIDER.DOWNLOAD}${sid}?noVideo=1`;
 }
 
@@ -93,19 +95,18 @@ function getInfoUrlV2(sid) {
     const originalFetch = window.fetch;
 
     window.fetch = async function(...args) {
-        const response = await originalFetch.apply(this, args);
         const url = args[0] instanceof Request ? args[0].url : args[0];
 
-        // Only intercept if it's an osu.direct API call
+        // 1. Intercept osu.direct API calls (Search & Info) to reformat JSON
         if (typeof url === "string" && url.includes("osu.direct/api/v2/")) {
+            const response = await originalFetch.apply(this, args);
             const originalJson = response.json.bind(response);
             
-            // Override the .json() method to reshape the data
+            // Override .json() to adapter osu!api v2 format -> Sayobot format
             response.json = async () => {
                 const data = await originalJson();
                 
-                // Case 1: Search results (API_LIST)
-                // Expected: { data: [ {sid, title, artist, creator, approved}, ... ] }
+                // Case A: Search results (API_LIST)
                 if (data.beatmapsets && Array.isArray(data.beatmapsets)) {
                     return {
                         data: data.beatmapsets.map(set => ({
@@ -118,13 +119,8 @@ function getInfoUrlV2(sid) {
                     };
                 }
 
-                // Case 2: Beatmapset info (API_INFO / API_INFO_V2)
-                // If it's a single set object from /api/v2/s/{id}
+                // Case B: Beatmapset info (API_INFO / API_INFO_V2)
                 if (data.id && data.beatmaps) {
-                    // Check if the caller expects a list of difficulties (API_INFO)
-                    // or set metadata (API_INFO_V2)
-                    
-                    // Transformation for API_INFO (requestMoreInfo expects res.data to be an array)
                     const difficulties = data.beatmaps.map(b => ({
                         bid: b.id,
                         mode: b.mode_int,
@@ -135,7 +131,6 @@ function getInfoUrlV2(sid) {
                         BPM: b.bpm
                     }));
 
-                    // Transformation for API_INFO_V2 (addBeatmapSid expects res.data to be an object)
                     const setMetadata = {
                         sid: data.id,
                         title: data.title,
@@ -143,27 +138,19 @@ function getInfoUrlV2(sid) {
                         creator: data.creator,
                         approved: data.ranked
                     };
-
-                    // We return a "hybrid" that satisfies both requestMoreInfo (res.data = array)
-                    // and addBeatmapSid (res.data = object). 
-                    // Since requestMoreInfo uses res.data.filter, we check the context or 
-                    // simply provide what the specific callers need.
                     
-                    // To be safe, we detect if the URL matches the V2 pattern or V1
-                    // However, in your code, addBeatmapSid uses res.data.sid while 
-                    // requestMoreInfo uses res.data.filter.
-                    
+                    // Return hybrid object
                     return {
                         status: 0,
-                        // If there are difficulties, we prioritize the array format for requestMoreInfo
-                        // but attach the set metadata so addBeatmapSid doesn't break.
                         data: Object.assign(difficulties, setMetadata)
                     };
                 }
-
                 return data;
             };
+            return response;
         }
-        return response;
+
+        // 2. Normal fetch for everything else (including downloads)
+        return originalFetch.apply(this, args);
     };
 })();
