@@ -1,4 +1,4 @@
-/*
+
 // scripts/config.js
 const BEATMAP_PROVIDER = {
     // Beatmap .osz download
@@ -39,7 +39,7 @@ function getInfoUrlV2(sid) {
     return `${BEATMAP_PROVIDER.API_INFO_V2}${sid}`;
 }
 
-*/
+/*
 
 // scripts/config.js
 
@@ -86,11 +86,6 @@ function getInfoUrlV2(sid) {
     return `${BEATMAP_PROVIDER.API_INFO_V2}${sid}`;
 }
 
-/**
- * COMPATIBILITY PATCH
- * This intercepts fetch calls to osu.direct and translates the response
- * into the format your existing scripts expect from Sayobot.
- */
 (function patchFetchForOsuDirect() {
     const originalFetch = window.fetch;
 
@@ -154,3 +149,4 @@ function getInfoUrlV2(sid) {
         return originalFetch.apply(this, args);
     };
 })();
+//*/
