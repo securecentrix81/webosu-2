@@ -362,6 +362,10 @@ function setOptionPanel() {
   bindcheck("hidegreat-check", "hideGreat");
   bindcheck("hidefollowpoints-check", "hideFollowPoints");
 
+  bindrange("beatmap-provider", "beatmapProvider", function (v) {
+    return ["Sayobot", "osu.direct"][v] || "Unknown";
+  });
+
   document.getElementById("restoredefault-btn").onclick = function () {
     Object.assign(gamesettings, defaultsettings);
     for (let i = 0; i < gamesettings.restoreCallbacks.length; ++i)
