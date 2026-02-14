@@ -360,26 +360,24 @@ function addBeatmapSid(sid, list) {
                 return;
             }
             
-            // Extract set-level data properly
+            // Build set-level data from the response
+            // res.data may be an array (with optional properties attached) or an object
             let setData;
-            if (Array.isArray(res.data) && res.data.length > 0) {
-                // If res.data is an array of difficulties, use first one's metadata
+            if (Array.isArray(res.data)) {
+                // Extract from array properties (osu.direct adapter) or first element (Sayobot)
+                const first = res.data[0] || {};
                 setData = {
-                    sid: sid,
-                    title: res.data[0].title || "Unknown",
-                    artist: res.data[0].artist || "Unknown",
-                    creator: res.data[0].creator || "Unknown",
-                    approved: res.data[0].approved ?? 0
+                    sid: res.data.sid || first.sid || sid,
+                    title: res.data.title || first.title || "Unknown",
+                    artist: res.data.artist || first.artist || "Unknown",
+                    creator: res.data.creator || first.creator || "Unknown",
+                    approved: res.data.approved ?? first.approved ?? 0
                 };
+            } else if (res.data && typeof res.data === 'object') {
+                setData = res.data;
             } else {
-                // If res.data is already set-level data
-                setData = {
-                    sid: sid,
-                    title: res.data.title || "Unknown",
-                    artist: res.data.artist || "Unknown", 
-                    creator: res.data.creator || "Unknown",
-                    approved: res.data.approved ?? 0
-                };
+                console.error("Unexpected response format");
+                return;
             }
             
             const box = NSaddBeatmapList.addpreviewbox(setData, list);
