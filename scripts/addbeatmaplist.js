@@ -359,20 +359,40 @@ function addBeatmapSid(sid, list) {
                 alert("Beatmap not found with specified sid");
                 return;
             }
-            // use data of first track as set data
-            const box = NSaddBeatmapList.addpreviewbox(res.data, list);
-            box.sid = res.data.sid;
+            
+            // Extract set-level data properly
+            let setData;
+            if (Array.isArray(res.data) && res.data.length > 0) {
+                // If res.data is an array of difficulties, use first one's metadata
+                setData = {
+                    sid: sid,
+                    title: res.data[0].title || "Unknown",
+                    artist: res.data[0].artist || "Unknown",
+                    creator: res.data[0].creator || "Unknown",
+                    approved: res.data[0].approved ?? 0
+                };
+            } else {
+                // If res.data is already set-level data
+                setData = {
+                    sid: sid,
+                    title: res.data.title || "Unknown",
+                    artist: res.data.artist || "Unknown", 
+                    creator: res.data.creator || "Unknown",
+                    approved: res.data.approved ?? 0
+                };
+            }
+            
+            const box = NSaddBeatmapList.addpreviewbox(setData, list);
+            box.sid = sid;
             NSaddBeatmapList.requestMoreInfo(box);
             box.onclick = function (e) {
-                // this is effective only when box.data is available
                 createDifficultyList(box, e);
                 startdownload(box);
             };
             if (window.beatmaplistLoadedCallback) {
                 window.beatmaplistLoadedCallback();
                 window.beatmaplistLoadedCallback = null;
-                // to make sure it's called only once
             }
         })
-        .catch(error => console.error(error)); // Handle errors
+        .catch(error => console.error(error));
 }
