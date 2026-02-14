@@ -68,7 +68,13 @@ if (activeProvider.name === "osu.direct") {
                     // Adapter: Beatmap info
                     if (data.id) {
                         return { status: 0, data: Object.assign(data.beatmaps.map(b => ({ 
-                            bid: b.id, version: b.version, star: b.difficulty_rating 
+                            bid: b.id,
+                            version: b.version,
+                            star: b.difficulty_rating,
+                            mode: b.mode_int,           // ADD THIS - 0 = osu!, 1 = taiko, 2 = catch, 3 = mania
+                            length: b.total_length,     // ADD THIS - length in seconds
+                            BPM: data.bpm,              // ADD THIS - BPM from beatmapset
+                            creator: data.creator       // ADD THIS - for difficulty list display
                         })), { sid: data.id, title: data.title, artist: data.artist })};
                     }
                     return data;
