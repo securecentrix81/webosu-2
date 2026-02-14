@@ -112,16 +112,7 @@ function createDifficultyList(boxclicked, event) {
 
 
 var NSaddBeatmapList = {
-    approvedText: function(status) {
-        if (status == 4) return "LOVED";
-        if (status == 3) return "QUALIFIED";
-        if (status == 2) return "APPROVED";
-        if (status == 1) return "RANKED";
-        if (status == 0) return "PENDING";
-        if (status == -1) return "WIP";
-        if (status == -2) return "GRAVEYARD";
-        return "UNKNOWN";
-    },
+
     addlikeicon: function (box) {
         let icon = document.createElement("div");
         icon.className = "beatmaplike";
@@ -181,18 +172,26 @@ var NSaddBeatmapList = {
 
     // map contains key: sid, title, artist, creator
     addpreviewbox: function (map, list) {
+        function approvedText(status) {
+            if (status == 4) return "LOVED";
+            if (status == 3) return "QUALIFIED";
+            if (status == 2) return "APPROVED";
+            if (status == 1) return "RANKED";
+            if (status == 0) return "PENDING";
+            if (status == -1) return "WIP";
+            if (status == -2) return "GRAVEYARD";
+            return "UNKNOWN";
+        }
         // create container of beatmap on web page
         let pBeatmapBox = document.createElement("div");
         pBeatmapBox.setdata = map;
         pBeatmapBox.sid = map.sid;
-        
         let pBeatmapCover = document.createElement("img");
         let pBeatmapCoverOverlay = document.createElement("div");
         let pBeatmapTitle = document.createElement("div");
         let pBeatmapArtist = document.createElement("div");
         let pBeatmapCreator = document.createElement("div");
         let pBeatmapApproved = document.createElement("div");
-
         pBeatmapBox.className = "beatmapbox";
         pBeatmapCover.className = "beatmapcover";
         pBeatmapCoverOverlay.className = "beatmapcover-overlay";
@@ -200,32 +199,23 @@ var NSaddBeatmapList = {
         pBeatmapArtist.className = "beatmapartist";
         pBeatmapCreator.className = "beatmapcreator";
         pBeatmapApproved.className = "beatmapapproved";
-
         pBeatmapBox.appendChild(pBeatmapCover);
         pBeatmapBox.appendChild(pBeatmapCoverOverlay);
         pBeatmapBox.appendChild(pBeatmapTitle);
         pBeatmapBox.appendChild(pBeatmapArtist);
         pBeatmapBox.appendChild(pBeatmapCreator);
         pBeatmapBox.appendChild(pBeatmapApproved);
-
         NSaddBeatmapList.addlikeicon(pBeatmapBox);
-
-        // 2. RESILIENT DATA BINDING
-        // Check for .creator OR .mapper; .approved OR .status
+        // set beatmap title & artist display (prefer ascii title)
         pBeatmapTitle.innerText = map.title;
         pBeatmapArtist.innerText = map.artist;
-        let mapperName = map.creator || map.mapper || "unknown";
-        pBeatmapCreator.innerText = "mapped by " + mapperName;
-        
+        pBeatmapCreator.innerText = "mapped by " + map.creator;
         pBeatmapCover.alt = "cover" + map.sid;
         pBeatmapCover.src = getCoverUrl(map.sid);
         pBeatmapCover.loading = "lazy";
         pBeatmapCover.width = 130;
         pBeatmapCover.height = 130;
-
-        let statusVal = (map.approved !== undefined) ? map.approved : map.status;
-        pBeatmapApproved.innerText = NSaddBeatmapList.approvedText(statusVal);
-
+        pBeatmapApproved.innerText = approvedText(map.approved);
         if (list) {
             list.appendChild(pBeatmapBox);
         }
@@ -296,23 +286,6 @@ var NSaddBeatmapList = {
         data = data.filter(function (o) { return o.mode == 0; });
         data = data.sort(function (a, b) { return Math.sign(a.star - b.star); });
         box.data = data;
-
-        // 3. FALLBACK PATCHING
-        // If the preview box failed to get mapper/status, get it from the first difficulty
-        if (data.length > 0) {
-            let first = data[0];
-            let pBeatmapCreator = box.querySelector(".beatmapcreator");
-            let pBeatmapApproved = box.querySelector(".beatmapapproved");
-
-            if (pBeatmapCreator && (pBeatmapCreator.innerText.includes("undefined") || pBeatmapCreator.innerText.includes("unknown"))) {
-                pBeatmapCreator.innerText = "mapped by " + (first.creator || first.mapper || "unknown");
-            }
-            if (pBeatmapApproved && pBeatmapApproved.innerText === "UNKNOWN") {
-                let statusVal = (first.approved !== undefined) ? first.approved : first.status;
-                pBeatmapApproved.innerText = NSaddBeatmapList.approvedText(statusVal);
-            }
-        }
-
         NSaddBeatmapList.addStarRings(box, data);
         NSaddBeatmapList.addLength(box, data);
     },
