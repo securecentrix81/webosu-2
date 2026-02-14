@@ -1,4 +1,4 @@
-require(["config.js"])
+require(["config"])
 function starname(star) {
     if (typeof (star) == "null") return "unknown";
     if (typeof (star) == "undefined") return "unknown";
