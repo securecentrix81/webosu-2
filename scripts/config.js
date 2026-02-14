@@ -49,7 +49,7 @@ function getInfoUrlV2(sid) {
 }
 
 // 4. Hardcoded Fetch Patch for osu.direct
-if (activeProvider.name === "osu.direct" && false) {
+if (activeProvider.name === "osu.direct") {
     (function patchFetchForOsuDirect() {
         const originalFetch = window.fetch;
         window.fetch = async function(...args) {
