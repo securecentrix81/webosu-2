@@ -1,4 +1,3 @@
-// Define a name for our cache
 const BEATMAP_CACHE_NAME = "beatmap-files-v1";
 
 // Function to start previewing a beatmap
@@ -59,34 +58,17 @@ async function startdownload(box) {
     let currentAudio = startpreview(box);
     if (box.downloading) return;
 
-    const url = getDownloadUrl(box.sid);
-    
-    // Check if we have this map cached already
-    const cache = await caches.open(BEATMAP_CACHE_NAME);
-    const cachedResponse = await cache.match(url);
-
-    if (cachedResponse) {
-        console.log("Loading beatmap from cache:", box.sid);
-        const blob = await cachedResponse.blob();
-        box.oszblob = blob;
-        box.classList.remove("downloading");
-        currentAudio.softstop();
-        // Trigger whatever "finished" logic your app uses (e.g., box.onclick)
-        if(box.onloaded) box.onloaded(); 
-        return;
-    }
-
-    // If not cached, proceed with download
     box.downloading = true;
     box.classList.add("downloading");
 
+    // 1. Create the UI immediately so the user sees feedback
     const container = document.createElement("div");
     container.className = "download-progress";
     const title = document.createElement("div");
     title.className = "title";
     title.innerText = box.setdata.title;
     const bar = document.createElement("progress");
-    bar.max = 1;
+    bar.max = 100;
     bar.value = 0;
 
     container.appendChild(title);
@@ -97,56 +79,73 @@ async function startdownload(box) {
         statuslines.insertBefore(container, statuslines.children[3]);
     }
 
-    fetch(url)
-        .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const url = getDownloadUrl(box.sid);
+
+    try {
+        // 2. Check the cache
+        const cache = await caches.open(BEATMAP_CACHE_NAME);
+        const cachedResponse = await cache.match(url);
+
+        if (cachedResponse) {
+            console.log("Loading from cache:", box.sid);
             
-            // We clone the response because the body can only be read once.
-            // One goes to the user, one goes to the cache.
-            const cacheResponse = response.clone();
-            const contentLength = response.headers.get('content-length');
-            const total = parseInt(contentLength, 10);
-            let loaded = 0;
-            bar.max = total;
-
-            const reader = response.body.getReader();
-            const chunks = [];
-
-            function read() {
-                return reader.read().then(({ done, value }) => {
-                    if (done) return;
-                    loaded += value.length;
-                    bar.value = loaded;
-                    chunks.push(value);
-                    return read();
-                });
-            }
-
-            return read().then(() => {
-                const blob = new Blob(chunks);
-                // Save to cache for next time
-                cache.put(url, new Response(blob, {
-                    headers: { 
-                        'Content-Type': 'application/octet-stream',
-                        'Content-Length': blob.size 
-                    }
-                }));
-                return blob;
-            });
-        })
-        .then(blob => {
-            box.oszblob = blob;
+            // Visual feedback: quickly fill the bar to show it's "loading"
+            bar.value = 100;
             bar.className = "finished";
+            
+            const blob = await cachedResponse.blob();
+            box.oszblob = blob;
             box.classList.remove("downloading");
             currentAudio.softstop();
-            // Remove progress bar after a delay
-            setTimeout(() => container.remove(), 2000);
-        })
-        .catch(error => {
-            console.error("Download failed:", error.message);
-            alert("Beatmap download failed: " + error.message);
-            box.downloading = false;
-            box.classList.remove("downloading");
-            container.remove();
-        });
+            
+            // Trigger loaded callback if it exists
+            if (box.onloaded) box.onloaded();
+            return;
+        }
+
+        // 3. Not in cache, proceed with actual fetch
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const cacheResponse = response.clone();
+        const contentLength = response.headers.get('content-length');
+        const total = parseInt(contentLength, 10);
+        let loaded = 0;
+        bar.max = total;
+
+        const reader = response.body.getReader();
+        const chunks = [];
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            chunks.push(value);
+            loaded += value.length;
+            bar.value = loaded; // Update progress bar
+        }
+
+        const blob = new Blob(chunks);
+        
+        // Save to cache for next time
+        cache.put(url, new Response(blob, {
+            headers: { 
+                'Content-Type': 'application/octet-stream',
+                'Content-Length': blob.size 
+            }
+        }));
+
+        box.oszblob = blob;
+        bar.className = "finished";
+        box.classList.remove("downloading");
+        currentAudio.softstop();
+        if (box.onloaded) box.onloaded();
+
+    } catch (error) {
+        console.error("Download failed:", error.message);
+        alert("Beatmap download failed. Please retry later.");
+        box.downloading = false;
+        box.classList.remove("downloading");
+        container.remove();
+    }
 }
