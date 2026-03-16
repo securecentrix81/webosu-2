@@ -1,35 +1,30 @@
+// Define a name for our cache
+const BEATMAP_CACHE_NAME = "beatmap-files-v1";
+
 // Function to start previewing a beatmap
 function startpreview(box) {
-    // Set initial volume
     let volume = 1;
-
-    // Check for window.gamesettings and adjust volume accordingly
     if (window.gamesettings) {
         volume = (window.gamesettings.mastervolume / 100) * (window.gamesettings.musicvolume / 100);
         volume = Math.min(1, Math.max(0, volume));
     }
 
-    // Stop any currently playing audio using a loop
     for (let audio of document.getElementsByTagName("audio")) {
         if (audio.softstop) {
             audio.softstop();
         }
     }
 
-    // Create audio element and source for the preview
     const audio = document.createElement("audio");
     const source = document.createElement("source");
-    console.log("pazinga");
     source.src = getPreviewUrl(box.sid);
     source.type = "audio/mpeg";
     audio.appendChild(source);
 
-    // Set initial volume to 0 and start playing
     audio.volume = 0;
     audio.play();
     document.body.appendChild(audio);
 
-    // Function to gradually increase volume
     const fadeIn = setInterval(() => {
         if (audio.volume < volume) {
             audio.volume = Math.min(volume, audio.volume + 0.05 * volume);
@@ -38,9 +33,8 @@ function startpreview(box) {
         }
     }, 30);
 
-    // Function to gradually decrease volume and remove audio
     const fadeOut = setInterval(() => {
-        if (audio.currentTime > 9.3) { // Assuming preview is 10 seconds long
+        if (audio.currentTime > 9.3) {
             audio.volume = Math.max(0, audio.volume - 0.05 * volume);
         }
         if (audio.volume === 0) {
@@ -49,7 +43,6 @@ function startpreview(box) {
         }
     }, 30);
 
-    // Soft stop function for the audio element
     audio.softstop = function () {
         const fadeOutInterval = setInterval(() => {
             audio.volume = Math.max(0, audio.volume - 0.05 * volume);
@@ -59,15 +52,31 @@ function startpreview(box) {
             }
         }, 10);
     };
-    return audio
+    return audio;
 }
-function startdownload(box) {
+
+async function startdownload(box) {
     let currentAudio = startpreview(box);
-    if (box.downloading) {
+    if (box.downloading) return;
+
+    const url = getDownloadUrl(box.sid);
+    
+    // Check if we have this map cached already
+    const cache = await caches.open(BEATMAP_CACHE_NAME);
+    const cachedResponse = await cache.match(url);
+
+    if (cachedResponse) {
+        console.log("Loading beatmap from cache:", box.sid);
+        const blob = await cachedResponse.blob();
+        box.oszblob = blob;
+        box.classList.remove("downloading");
+        currentAudio.softstop();
+        // Trigger whatever "finished" logic your app uses (e.g., box.onclick)
+        if(box.onloaded) box.onloaded(); 
         return;
     }
 
-    const url = getDownloadUrl(box.sid);
+    // If not cached, proceed with download
     box.downloading = true;
     box.classList.add("downloading");
 
@@ -86,23 +95,16 @@ function startdownload(box) {
     const statuslines = document.getElementById("statuslines");
     if (statuslines) {
         statuslines.insertBefore(container, statuslines.children[3]);
-    } else {
-        console.error("statuslines element not found");
     }
-
-    box.download_starttime = new Date().getTime();
 
     fetch(url)
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            
+            // We clone the response because the body can only be read once.
+            // One goes to the user, one goes to the cache.
+            const cacheResponse = response.clone();
             const contentLength = response.headers.get('content-length');
-            if (!contentLength) {
-                throw new Error("Content-Length header is missing");
-            }
-
             const total = parseInt(contentLength, 10);
             let loaded = 0;
             bar.max = total;
@@ -112,20 +114,24 @@ function startdownload(box) {
 
             function read() {
                 return reader.read().then(({ done, value }) => {
-                    if (done) {
-                        return;
-                    }
-
+                    if (done) return;
                     loaded += value.length;
                     bar.value = loaded;
-
                     chunks.push(value);
                     return read();
                 });
             }
 
             return read().then(() => {
-                return new Blob(chunks);
+                const blob = new Blob(chunks);
+                // Save to cache for next time
+                cache.put(url, new Response(blob, {
+                    headers: { 
+                        'Content-Type': 'application/octet-stream',
+                        'Content-Length': blob.size 
+                    }
+                }));
+                return blob;
             });
         })
         .then(blob => {
@@ -133,11 +139,14 @@ function startdownload(box) {
             bar.className = "finished";
             box.classList.remove("downloading");
             currentAudio.softstop();
+            // Remove progress bar after a delay
+            setTimeout(() => container.remove(), 2000);
         })
         .catch(error => {
             console.error("Download failed:", error.message);
-            alert("Beatmap download failed. Please retry later.");
+            alert("Beatmap download failed.");
             box.downloading = false;
             box.classList.remove("downloading");
+            container.remove();
         });
 }
