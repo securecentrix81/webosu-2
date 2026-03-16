@@ -144,7 +144,7 @@ async function startdownload(box) {
         })
         .catch(error => {
             console.error("Download failed:", error.message);
-            alert("Beatmap download failed.");
+            alert("Beatmap download failed: " + error.message);
             box.downloading = false;
             box.classList.remove("downloading");
             container.remove();
