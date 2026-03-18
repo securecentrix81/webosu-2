@@ -7,7 +7,7 @@ define([], function () {
       time: playback.osu.audio.getPosition() * 1000,
     };
     var hit = upcoming.find(inUpcoming(click));
-    if (localStorage.getItem("osu-debug-test") !== "on") {
+/*    if (localStorage.getItem("osu-debug-test") !== "on") {
     if (!hit && game.mouse) {
       // if not hit with traditional (lagged) cursor position,
       // try predicted position with more tolerance
@@ -15,7 +15,7 @@ define([], function () {
       res.time = click.time;
       hit = upcoming.find(inUpcoming_grace(res));
     }
-    }
+    }*/
     if (hit) {
       if (hit.type == "circle" || hit.type == "slider") {
         let points = 50;
