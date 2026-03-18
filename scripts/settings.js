@@ -55,6 +55,8 @@ function setOptionPanel() {
     hideNumbers: false,
     hideGreat: false,
     hideFollowPoints: false,
+
+    beatmapProvider: 0,
   };
   window.gamesettings = {};
   Object.assign(gamesettings, defaultsettings);
